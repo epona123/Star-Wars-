@@ -105,7 +105,6 @@ function updateDisplay(){
   document.getElementById("dmgCost").innerHTML = damageCost;
   document.getElementById("hpCost").innerHTML = healthCost;
 
-  // Inventory display
   var invDiv = document.getElementById("inventory");
   invDiv.innerHTML = "";
   for(var key in inventory){
@@ -157,19 +156,17 @@ function nextCombat(){
 
   inCombat=true;
   var enemy = Object.assign({}, enemies[enemyIndex]);
-  var enemyName=enemy.name;
   var enemyHealth=enemy.health;
-  var enemyDamage=enemy.damage;
-  document.getElementById("enemy").innerHTML=enemyName;
-  updateHpBars(enemyHealth, enemy.health);
+  var enemyMax=enemy.health;
+  document.getElementById("enemy").innerHTML=enemy.name;
+  updateHpBars(enemyHealth, enemyMax);
 
   function combatStep(){
-    if(health<=0){ document.getElementById("message").innerHTML="You were defeated by "+enemyName+"."; gameOver=true; inCombat=false; return; }
+    if(health<=0){ document.getElementById("message").innerHTML="You were defeated by "+enemy.name+"."; gameOver=true; inCombat=false; return; }
     if(enemyHealth<=0){
-      document.getElementById("message").innerHTML=enemyName+" defeated!";
+      document.getElementById("message").innerHTML=enemy.name+" defeated!";
       forcePower+=40;
 
-      // Loot drop
       if(Math.random()<0.5){
         var lootItem = items[Math.floor(Math.random()*items.length)];
         if(inventory[lootItem.name]){ inventory[lootItem.name].count+=1; }
@@ -185,51 +182,48 @@ function nextCombat(){
       return;
     }
 
-    // Attack animation
     flash("player");
     flash("enemy");
     enemyHealth-=damage;
-    health-=enemyDamage;
-    updateHpBars(enemyHealth, enemy.health);
-
-    setTimeout(combatStep, 500);
+    health-=enemy.damage;
+    updateHpBars(enemyHealth, enemyMax);
+    setTimeout(combatStep,500);
   }
 
   combatStep();
 }
 
-/* ================= FIGHT BOSS WITH SPECIAL ATTACKS ================= */
+/* ================= FIGHT BOSS ================= */
 function fightBoss(){
   if(gameOver || inCombat) return;
   inCombat=true;
 
-  var bossName=boss.name;
-  var bossHealth=boss.health;
-  var bossDamage=boss.damage;
+  var bossHealth = boss.health;
+  var bossMax = boss.health;
   var turn=0;
-  document.getElementById("enemy").innerHTML=bossName;
-  updateHpBars(bossHealth,boss.health);
+
+  document.getElementById("enemy").innerHTML=boss.name;
+  updateHpBars(bossHealth,bossMax);
 
   function combatStep(){
-    if(health<=0){ document.getElementById("message").innerHTML=bossName+" defeated you."; gameOver=true; inCombat=false; return; }
-    if(bossHealth<=0){ document.getElementById("message").innerHTML="You defeated "+bossName+" and escaped!"; gameOver=true; inCombat=false; document.getElementById("enemy").innerHTML=""; updateHpBars(); return; }
+    if(health<=0){ document.getElementById("message").innerHTML=boss.name+" defeated you."; gameOver=true; inCombat=false; return; }
+    if(bossHealth<=0){ document.getElementById("message").innerHTML="You defeated "+boss.name+" and escaped!"; gameOver=true; inCombat=false; document.getElementById("enemy").innerHTML=""; updateHpBars(); return; }
 
     turn++;
 
-    // Boss special every 3 turns
-    var bossAttack=bossDamage;
+    var bossAttack = boss.damage;
     if(turn%3===0){
-      bossAttack=bossDamage*2;
-      document.getElementById("message").innerHTML=bossName+" uses Force Slam!";
+      bossAttack = boss.damage*2;
+      document.getElementById("message").innerHTML=boss.name+" uses Force Slam!";
     } else { document.getElementById("message").innerHTML=""; }
 
     flash("player");
     flash("enemy");
-    bossHealth-=damage;
-    health-=bossAttack;
-    updateHpBars(bossHealth, boss.health);
+    bossHealth -= damage;
+    health -= bossAttack;
+    updateHpBars(bossHealth,bossMax);
 
-    setTimeout(combatStep, 600);
+    setTimeout(combatStep,600);
   }
 
   combatStep();
@@ -244,6 +238,7 @@ document.addEventListener("keydown",function(e){
 
 /* ================= INIT ================= */
 updateDisplay();
+updateHpBars();
 document.body.focus();
 </script>
 
