@@ -2,12 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Escape the Dark Lord - Idle RPG w/ Inventory</title>
+<title>Escape the Dark Lord - Idle RPG</title>
 <style>
 body { background: black; color: #00ffcc; font-family: monospace; text-align: center; padding: 20px; }
 button { background: black; color: #00ffcc; border: 1px solid #00ffcc; padding: 8px; margin: 5px; cursor: pointer; }
 button:hover { background: #00ffcc; color: black; }
-#combatArea { border: 1px solid #00ffcc; height: 80px; margin-top: 15px; line-height: 80px; }
+#combatArea { border: 1px solid #00ffcc; height: 80px; margin-top: 15px; line-height: 80px; position: relative; }
+.character { display: inline-block; padding: 0 20px; transition: transform 0.1s; }
+#player { color: #00ffcc; }
+#enemy { color: red; }
 #inventory { margin-top: 20px; }
 .item { display: inline-block; border: 1px solid #00ffcc; padding: 4px 8px; margin: 3px; cursor: default; }
 .item:hover { background: #00ffcc; color: black; }
@@ -31,17 +34,20 @@ Damage: <span id="damage">10</span>
 
 <br><br>
 
-<button onclick="fightEnemy()">Fight Enemy</button>
-<button onclick="fightBoss()">Fight Dark Lord</button>
+<button onclick="nextCombat()">Fight Next Enemy</button>
+<button onclick="fightBoss()">Fight Boss</button>
 
-<div id="combatArea"></div>
+<div id="combatArea">
+  <span id="player" class="character">YOU</span>
+  <span id="enemy" class="character"></span>
+</div>
+
 <div id="message"></div>
 
 <h3>Inventory</h3>
 <div id="inventory"></div>
 
 <script>
-
 /* ================= PLAYER STATS ================= */
 var forcePower = 10;
 var forcePerSecond = 1;
@@ -54,31 +60,32 @@ var damageCost = 40;
 var healthCost = 50;
 
 var gameOver = false;
+var inCombat = false;
 
 /* ================= ENEMIES ================= */
 var enemies = [
   { name: "Storm Trooper", health: 40, damage: 5 },
-  { name: "Dark Apprentice", health: 70, damage: 8 },
-  { name: "Sith Guard", health: 100, damage: 12 },
   { name: "Imperial Scout", health: 60, damage: 6 },
-  { name: "Bounty Hunter", health: 80, damage: 10 }
+  { name: "Dark Apprentice", health: 70, damage: 8 },
+  { name: "Bounty Hunter", health: 80, damage: 10 },
+  { name: "Sith Guard", health: 100, damage: 12 }
 ];
-
 var boss = { name: "Darth Vader", health: 250, damage: 25 };
+var enemyIndex = 0; // Track sequential enemy
 
 /* ================= ITEMS ================= */
 var items = [
   { name: "Force Crystal", desc: "Increases Force production by 1 per second.", effect: function(){ forcePerSecond += 1; } },
-  { name: "Healing Pack", desc: "Permanently increases max health by 5.", effect: function(){ maxHealth += 5; health += 5; } },
-  { name: "Lightsaber Shard", desc: "Permanently increases damage by 2.", effect: function(){ damage += 2; } },
+  { name: "Healing Pack", desc: "Permanently increases max health by 5.", effect: function(){ maxHealth += 5; health +=5; } },
+  { name: "Lightsaber Shard", desc: "Permanently increases damage by 2.", effect: function(){ damage +=2; } },
   { name: "Ancient Droid Part", desc: "Increases Force production by 2 per second.", effect: function(){ forcePerSecond += 2; } }
 ];
 
 /* ================= INVENTORY ================= */
-var inventory = [];
+var inventory = {}; // { "Force Crystal": {count:3, desc:"..."} }
 
 /* ================= UPDATE DISPLAY ================= */
-function updateDisplay() {
+function updateDisplay(){
   document.getElementById("power").innerHTML = Math.floor(forcePower);
   document.getElementById("fps").innerHTML = forcePerSecond;
   document.getElementById("health").innerHTML = Math.floor(health);
@@ -88,132 +95,131 @@ function updateDisplay() {
   document.getElementById("dmgCost").innerHTML = damageCost;
   document.getElementById("hpCost").innerHTML = healthCost;
 
-  // Update inventory display
+  // Inventory display
   var invDiv = document.getElementById("inventory");
   invDiv.innerHTML = "";
-  for(var i=0; i<inventory.length; i++){
+  for(var key in inventory){
     var itemDiv = document.createElement("div");
-    itemDiv.className = "item";
-    itemDiv.title = inventory[i].desc;
-    itemDiv.innerHTML = inventory[i].name;
+    itemDiv.className="item";
+    itemDiv.title = inventory[key].desc;
+    itemDiv.innerHTML = key + " x" + inventory[key].count;
     invDiv.appendChild(itemDiv);
   }
 }
 
 /* ================= IDLE SYSTEM ================= */
-setInterval(function() {
+setInterval(function(){
   if(!gameOver){
     forcePower += forcePerSecond;
 
-    // Health regeneration
+    // Health regen
     health += 1;
-    if(health > maxHealth) health = maxHealth;
+    if(health>maxHealth) health=maxHealth;
 
     updateDisplay();
   }
-}, 1000);
+},1000);
 
 /* ================= UPGRADES ================= */
 function buyGenerator(){
-  if(forcePower >= generatorCost){
-    forcePower -= generatorCost;
-    forcePerSecond += 1;
-    generatorCost = Math.floor(generatorCost*1.5);
-    document.getElementById("message").innerHTML = "Force production increased!";
-    updateDisplay();
-  }
+  if(forcePower>=generatorCost){ forcePower-=generatorCost; forcePerSecond+=1; generatorCost=Math.floor(generatorCost*1.5); document.getElementById("message").innerHTML="Force production increased!"; updateDisplay(); }
 }
 function buyDamage(){
-  if(forcePower >= damageCost){
-    forcePower -= damageCost;
-    damage += 5;
-    damageCost = Math.floor(damageCost*1.5);
-    document.getElementById("message").innerHTML = "Damage increased!";
-    updateDisplay();
-  }
+  if(forcePower>=damageCost){ forcePower-=damageCost; damage+=5; damageCost=Math.floor(damageCost*1.5); document.getElementById("message").innerHTML="Damage increased!"; updateDisplay(); }
 }
 function buyHealth(){
-  if(forcePower >= healthCost){
-    forcePower -= healthCost;
-    maxHealth += 25;
-    health = maxHealth;
-    healthCost = Math.floor(healthCost*1.5);
-    document.getElementById("message").innerHTML = "Max health increased!";
-    updateDisplay();
-  }
+  if(forcePower>=healthCost){ forcePower-=healthCost; maxHealth+=25; health=maxHealth; healthCost=Math.floor(healthCost*1.5); document.getElementById("message").innerHTML="Max health increased!"; updateDisplay(); }
 }
 
-/* ================= RANDOM ENEMY ================= */
-function randomEnemy(){
-  return enemies[Math.floor(Math.random()*enemies.length)];
+/* ================= COMBAT ANIMATION ================= */
+function flash(element){
+  var el=document.getElementById(element);
+  el.style.transform="scale(1.3)";
+  setTimeout(function(){el.style.transform="scale(1)";},100);
 }
 
-/* ================= COMBAT ================= */
-function fightEnemy(){
-  if(gameOver) return;
+/* ================= FIGHT NEXT ENEMY ================= */
+function nextCombat(){
+  if(gameOver || inCombat) return;
+  if(enemyIndex>=enemies.length){ document.getElementById("message").innerHTML="All regular enemies defeated!"; return; }
 
-  var enemy = randomEnemy();
-  var enemyHealth = enemy.health;
-  var enemyName = enemy.name;
-  var enemyDamage = enemy.damage;
+  inCombat=true;
+  var enemy = Object.assign({}, enemies[enemyIndex]);
+  var enemyName=enemy.name;
+  var enemyHealth=enemy.health;
+  var enemyDamage=enemy.damage;
+  document.getElementById("enemy").innerHTML=enemyName;
 
-  while(enemyHealth > 0 && health > 0){
-    enemyHealth -= damage;
-    health -= enemyDamage;
-  }
+  function combatStep(){
+    if(health<=0){ document.getElementById("message").innerHTML="You were defeated by "+enemyName+"."; gameOver=true; inCombat=false; return; }
+    if(enemyHealth<=0){
+      document.getElementById("message").innerHTML=enemyName+" defeated!";
+      forcePower+=40;
 
-  if(health <= 0){
-    document.getElementById("message").innerHTML = "You were defeated by "+enemyName+".";
-    gameOver = true;
-  } else {
-    forcePower += 40;
-    document.getElementById("message").innerHTML = enemyName+" defeated!";
+      // Loot drop
+      if(Math.random()<0.5){
+        var lootItem = items[Math.floor(Math.random()*items.length)];
+        if(inventory[lootItem.name]){ inventory[lootItem.name].count+=1; }
+        else{ inventory[lootItem.name]={count:1,desc:lootItem.desc}; }
+        lootItem.effect();
+      }
 
-    // Loot drop
-    if(Math.random()<0.5){
-      var lootItem = items[Math.floor(Math.random()*items.length)];
-      inventory.push(lootItem);
-      lootItem.effect(); // Apply buffs immediately
+      enemyIndex++;
+      inCombat=false;
+      document.getElementById("enemy").innerHTML="";
+      updateDisplay();
+      return;
     }
+
+    // Attack animation
+    flash("player");
+    flash("enemy");
+    enemyHealth-=damage;
+    health-=enemyDamage;
+    updateDisplay();
+
+    setTimeout(combatStep, 500);
   }
 
-  updateDisplay();
+  combatStep();
 }
 
+/* ================= FIGHT BOSS ================= */
 function fightBoss(){
-  if(gameOver) return;
+  if(gameOver || inCombat) return;
+  inCombat=true;
 
-  var bossHealth = boss.health;
-  var bossName = boss.name;
-  var bossDamage = boss.damage;
+  var bossName=boss.name;
+  var bossHealth=boss.health;
+  var bossDamage=boss.damage;
+  document.getElementById("enemy").innerHTML=bossName;
 
-  while(bossHealth > 0 && health > 0){
-    bossHealth -= damage;
-    health -= bossDamage;
+  function combatStep(){
+    if(health<=0){ document.getElementById("message").innerHTML=bossName+" defeated you."; gameOver=true; inCombat=false; return; }
+    if(bossHealth<=0){ document.getElementById("message").innerHTML="You defeated "+bossName+" and escaped!"; gameOver=true; inCombat=false; document.getElementById("enemy").innerHTML=""; updateDisplay(); return; }
+
+    flash("player");
+    flash("enemy");
+    bossHealth-=damage;
+    health-=bossDamage;
+    updateDisplay();
+    setTimeout(combatStep, 500);
   }
 
-  if(health <=0){
-    document.getElementById("message").innerHTML = bossName + " defeated you.";
-    gameOver = true;
-  } else {
-    document.getElementById("message").innerHTML = "You defeated "+bossName+" and escaped!";
-    gameOver = true;
-  }
-
-  updateDisplay();
+  combatStep();
 }
 
 /* ================= KEYBOARD ================= */
-document.addEventListener("keydown", function(e){
+document.addEventListener("keydown",function(e){
   if(gameOver) return;
-  if(e.key.toLowerCase() === "e") fightEnemy();
-  if(e.key.toLowerCase() === "b") fightBoss();
+  if(e.key.toLowerCase()==="e") nextCombat();
+  if(e.key.toLowerCase()==="b") fightBoss();
 });
 
 /* ================= INIT ================= */
 updateDisplay();
 document.body.focus();
-
 </script>
+
 </body>
 </html>
