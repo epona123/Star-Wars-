@@ -1,144 +1,83 @@
-<script>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Escape the Dark Lord</title>
 
-// PLAYER STATS
-let forcePower = 10;
-let level = 1;
-let health = 100;
-let maxHealth = 100;
-let damage = 10;
-
-let gameOver = false;
-let inCombat = false;
-
-// ENEMIES
-const enemies = [
-    { name: "Storm Trooper", health: 40, damage: 5 },
-    { name: "Dark Apprentice", health: 70, damage: 8 },
-    { name: "Sith Guard", health: 100, damage: 12 }
-];
-
-const darkLord = { name: "Dark Lord", health: 200, damage: 20 };
-
-// Make page focusable
-document.body.setAttribute("tabindex", "0");
-document.body.focus();
-
-// DISPLAY UPDATE
-function updateDisplay() {
-    document.getElementById("power").textContent = Math.floor(forcePower);
-    document.getElementById("level").textContent = level;
-    document.getElementById("health").textContent = health;
-    document.getElementById("damage").textContent = damage;
+<style>
+body {
+    background: black;
+    color: #00ffcc;
+    font-family: monospace;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
 }
 
-// IDLE FORCE GAIN
-setInterval(() => {
-    if (!gameOver && !inCombat) {
-        forcePower += level;
-        updateDisplay();
-    }
-}, 1000);
-
-// SAFE KEY HANDLER
-function handleKey(e) {
-    if (gameOver || inCombat) return;
-
-    const key = e.key.toLowerCase();
-
-    if (key === "t") train();
-    if (key === "e") startCombat(randomEnemy());
-    if (key === "u") upgrade();
-    if (key === "b") startCombat({...darkLord});
+h1 {
+    color: red;
 }
 
-document.addEventListener("keydown", handleKey);
-
-// TRAIN
-function train() {
-    forcePower += 5;
-    level++;
-    damage += 2;
-    document.getElementById("message").textContent = "You grow stronger in the Force.";
-    updateDisplay();
+#gameBox {
+    border: 2px solid #00ffcc;
+    padding: 20px;
+    max-width: 700px;
+    margin: auto;
 }
 
-// UPGRADE
-function upgrade() {
-    if (forcePower >= 50) {
-        forcePower -= 50;
-        maxHealth += 20;
-        health = maxHealth;
-        damage += 5;
-        document.getElementById("message").textContent = "Upgrade complete!";
-    } else {
-        document.getElementById("message").textContent = "Not enough Force Power!";
-    }
-    updateDisplay();
+.stat {
+    margin: 8px 0;
 }
 
-// RANDOM ENEMY
-function randomEnemy() {
-    return {...enemies[Math.floor(Math.random() * enemies.length)]};
+#combatArea {
+    height: 120px;
+    margin-top: 20px;
+    border: 1px solid #00ffcc;
+    position: relative;
 }
 
-// COMBAT
-function startCombat(enemy) {
-    inCombat = true;
-    document.getElementById("enemy").textContent = enemy.name;
-    document.getElementById("message").textContent = "Combat Started!";
-
-    function combatTurn() {
-
-        enemy.health -= damage;
-        animateAttack("enemy");
-
-        if (enemy.health <= 0) {
-            forcePower += 30;
-            document.getElementById("message").textContent = "Enemy defeated!";
-            endCombat();
-            if (enemy.name === "Dark Lord") winGame();
-            return;
-        }
-
-        health -= enemy.damage;
-        animateAttack("player");
-
-        if (health <= 0) {
-            loseGame();
-            return;
-        }
-
-        updateDisplay();
-        setTimeout(combatTurn, 800);
-    }
-
-    setTimeout(combatTurn, 800);
+.character {
+    position: absolute;
+    top: 40px;
+    font-size: 18px;
 }
 
-// ANIMATION
-function animateAttack(target) {
-    let element = document.getElementById(target);
-    element.classList.add("attackFlash");
-    setTimeout(() => element.classList.remove("attackFlash"), 300);
+#player {
+    left: 50px;
 }
 
-// END COMBAT
-function endCombat() {
-    inCombat = false;
-    document.getElementById("enemy").textContent = "";
-    updateDisplay();
+#enemy {
+    right: 50px;
 }
 
-function winGame() {
-    document.getElementById("message").textContent = "You defeated the Dark Lord and escaped!";
-    gameOver = true;
+button {
+    background: black;
+    color: #00ffcc;
+    border: 1px solid #00ffcc;
+    padding: 8px;
+    margin: 5px;
+    cursor: pointer;
 }
 
-function loseGame() {
-    document.getElementById("message").textContent = "You were too weak to survive...";
-    gameOver = true;
+button:hover {
+    background: #00ffcc;
+    color: black;
 }
 
-updateDisplay();
+#message {
+    margin-top: 15px;
+    min-height: 40px;
+}
+</style>
+</head>
 
-</script>
+<body>
+
+<h1>Escape the Dark Lord</h1>
+
+<div id="gameBox">
+
+<div class="stat">Force Power: <span id="power">10</span></div>
+<div class="stat">Level: <span id="level">1</span></div>
+<div class="stat">Health: <span id="health">100</span></div>
+<div class="stat">Damage: <span id="da
