@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Escape the Dark Lord</title>
+<style>
+    body {
+        background-color: black;
+        color: #00ffcc;
+        font-family: monospace;
+        text-align: center;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h1 {
+        color: red;
+    }
+
+    #gameBox {
+        border: 2px solid #00ffcc;
+        padding: 20px;
+        max-width: 600px;
+        margin: auto;
+    }
+
+    .stat {
+        margin: 10px 0;
+        font-size: 18px;
+    }
+
+    button {
+        background-color: #111;
+        color: #00ffcc;
+        border: 1px solid #00ffcc;
+        padding: 10px;
+        margin: 10px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #00ffcc;
+        color: black;
+    }
+
+    #message {
+        margin-top: 20px;
+        min-height: 40px;
+        font-size: 16px;
+    }
+</style>
+</head>
+<body>
+
+<h1>Escape the Dark Lord</h1>
+
+<div id="gameBox">
+    <div class="stat">Force Power: <span id="power">10</span></div>
+    <div class="stat">Training Level: <span id="level">1</span></div>
+    <div class="stat">Survival Threshold: 150 Force</div>
+
+    <p>Press <b>T</b> to Train</p>
+    <p>Press <b>F</b> to Confront the Dark Lord</p>
+
+    <div id="message"></div>
+</div>
+
+<script>
+/*
+    Escape the Dark Lord
+    Idle + RPG Hybrid Game
+    Everything in one file
+*/
+
+// Starting stats
+let forcePower = 10;
+let trainingLevel = 1;
+let survivalRequirement = 150;
+let gameOver = false;
+
+// Update displayed stats
+function updateDisplay() {
+    document.getElementById("power").textContent = Math.floor(forcePower);
+    document.getElementById("level").textContent = trainingLevel;
+}
+
+// Idle mechanic: gain small Force power every second
+setInterval(() => {
+    if (!gameOver) {
+        forcePower += 1 * trainingLevel;
+        updateDisplay();
+    }
+}, 1000);
+
+// Keyboard controls
+document.addEventListener("keydown", function(event) {
+    if (gameOver) return;
+
+    // Train with T key
+    if (event.key.toLowerCase() === "t") {
+        train();
+    }
+
+    // Fight with F key
+    if (event.key.toLowerCase() === "f") {
+        fight();
+    }
+});
+
+// Training function
+function train() {
+    forcePower += 5;
+    trainingLevel++;
+
+    document.getElementById("message").textContent =
+        "You meditate and grow stronger...";
+
+    updateDisplay();
+}
+
+// Fight function
+function fight() {
+
+    if (forcePower >= survivalRequirement) {
+        document.getElementById("message").textContent =
+            "You are strong enough! You escape and live to fight another day!";
+        gameOver = true;
+    } else {
+        document.getElementById("message").textContent =
+            "You were too weak... The Dark Lord defeats you.";
+        gameOver = true;
+    }
+}
+
+// Initial display update
+updateDisplay();
+
+</script>
+
+</body>
+</html>
