@@ -2,28 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Escape the Dark Lord - Idle Edition</title>
-
+<title>Escape the Dark Lord</title>
 <style>
 body {
     background: black;
     color: #00ffcc;
     font-family: monospace;
     text-align: center;
-    margin: 0;
     padding: 20px;
 }
-
-h1 { color: red; }
-
-#gameBox {
-    border: 2px solid #00ffcc;
-    padding: 20px;
-    max-width: 750px;
-    margin: auto;
-}
-
-.stat { margin: 6px 0; }
 
 button {
     background: black;
@@ -40,119 +27,84 @@ button:hover {
 }
 
 #combatArea {
-    height: 100px;
-    margin-top: 20px;
     border: 1px solid #00ffcc;
-    position: relative;
-}
-
-.character {
-    position: absolute;
-    top: 40px;
-}
-
-#player { left: 50px; }
-#enemy { right: 50px; }
-
-#message {
+    height: 80px;
     margin-top: 15px;
-    min-height: 40px;
+    line-height: 80px;
 }
 </style>
 </head>
 
-<body tabindex="0">
+<body>
 
 <h1>Escape the Dark Lord</h1>
 
-<div id="gameBox">
-
-<div class="stat">Force Power: <span id="power">10</span></div>
-<div class="stat">Force Per Second: <span id="fps">1</span></div>
-<div class="stat">Health: <span id="health">100</span></div>
-<div class="stat">Damage: <span id="damage">10</span></div>
-
-<p><b>Keyboard:</b> E = Fight | B = Boss</p>
+<div>
+Force Power: <span id="power">10</span><br>
+Force Per Second: <span id="fps">1</span><br>
+Health: <span id="health">100</span><br>
+Damage: <span id="damage">10</span>
+</div>
 
 <h3>Upgrades</h3>
-<button onclick="buyGenerator()">Increase Force Production (Cost: <span id="genCost">25</span>)</button>
-<button onclick="buyDamage()">Increase Damage (Cost: <span id="dmgCost">40</span>)</button>
-<button onclick="buyHealth()">Increase Max Health (Cost: <span id="hpCost">50</span>)</button>
+
+<button onclick="buyGenerator()">Increase Production (<span id="genCost">25</span>)</button>
+<button onclick="buyDamage()">Increase Damage (<span id="dmgCost">40</span>)</button>
+<button onclick="buyHealth()">Increase Health (<span id="hpCost">50</span>)</button>
 
 <br><br>
 
-<button onclick="startCombat(randomEnemy())">Fight Enemy</button>
-<button onclick="startCombat({...darkLord})">Fight Dark Lord</button>
+<button onclick="fightEnemy()">Fight Enemy</button>
+<button onclick="fightBoss()">Fight Dark Lord</button>
 
-<div id="combatArea">
-    <div id="player" class="character">You</div>
-    <div id="enemy" class="character"></div>
-</div>
+<div id="combatArea"></div>
 
 <div id="message"></div>
 
-</div>
-
 <script>
 
-/* ================= PLAYER STATS ================= */
+/* ================= VARIABLES ================= */
 
-let forcePower = 10;
-let forcePerSecond = 1;
+var forcePower = 10;
+var forcePerSecond = 1;
+var health = 100;
+var maxHealth = 100;
+var damage = 10;
 
-let health = 100;
-let maxHealth = 100;
-let damage = 10;
+var generatorCost = 25;
+var damageCost = 40;
+var healthCost = 50;
 
-let gameOver = false;
-let inCombat = false;
-
-/* ================= UPGRADE COSTS ================= */
-
-let generatorCost = 25;
-let damageCost = 40;
-let healthCost = 50;
-
-/* ================= ENEMIES ================= */
-
-const enemies = [
-    { name: "Storm Trooper", health: 40, damage: 5 },
-    { name: "Dark Apprentice", health: 70, damage: 8 },
-    { name: "Sith Guard", health: 100, damage: 12 }
-];
-
-const darkLord = { name: "Dark Lord", health: 250, damage: 25 };
+var gameOver = false;
 
 /* ================= UPDATE DISPLAY ================= */
 
 function updateDisplay() {
-    document.getElementById("power").textContent = Math.floor(forcePower);
-    document.getElementById("fps").textContent = forcePerSecond;
-    document.getElementById("health").textContent = health;
-    document.getElementById("damage").textContent = damage;
-
-    document.getElementById("genCost").textContent = generatorCost;
-    document.getElementById("dmgCost").textContent = damageCost;
-    document.getElementById("hpCost").textContent = healthCost;
+    document.getElementById("power").innerHTML = Math.floor(forcePower);
+    document.getElementById("fps").innerHTML = forcePerSecond;
+    document.getElementById("health").innerHTML = health;
+    document.getElementById("damage").innerHTML = damage;
+    document.getElementById("genCost").innerHTML = generatorCost;
+    document.getElementById("dmgCost").innerHTML = damageCost;
+    document.getElementById("hpCost").innerHTML = healthCost;
 }
 
 /* ================= IDLE SYSTEM ================= */
 
 setInterval(function() {
-    if (!gameOver && !inCombat) {
-        forcePower += forcePerSecond;
+    if (!gameOver) {
+        forcePower = forcePower + forcePerSecond;
         updateDisplay();
     }
 }, 1000);
 
-/* ================= UPGRADE FUNCTIONS ================= */
+/* ================= UPGRADES ================= */
 
 function buyGenerator() {
     if (forcePower >= generatorCost) {
         forcePower -= generatorCost;
         forcePerSecond += 1;
         generatorCost = Math.floor(generatorCost * 1.5);
-        document.getElementById("message").textContent = "Force production increased!";
         updateDisplay();
     }
 }
@@ -161,8 +113,7 @@ function buyDamage() {
     if (forcePower >= damageCost) {
         forcePower -= damageCost;
         damage += 5;
-        damageCost = Math.floor(damageCost * 1.6);
-        document.getElementById("message").textContent = "Damage increased!";
+        damageCost = Math.floor(damageCost * 1.5);
         updateDisplay();
     }
 }
@@ -171,3 +122,60 @@ function buyHealth() {
     if (forcePower >= healthCost) {
         forcePower -= healthCost;
         maxHealth += 25;
+        health = maxHealth;
+        healthCost = Math.floor(healthCost * 1.5);
+        updateDisplay();
+    }
+}
+
+/* ================= COMBAT ================= */
+
+function fightEnemy() {
+    var enemyHealth = 60;
+    var enemyDamage = 8;
+
+    while (enemyHealth > 0 && health > 0) {
+        enemyHealth -= damage;
+        health -= enemyDamage;
+    }
+
+    if (health <= 0) {
+        document.getElementById("message").innerHTML = "You were defeated.";
+        gameOver = true;
+    } else {
+        forcePower += 40;
+        document.getElementById("message").innerHTML = "Enemy defeated!";
+    }
+
+    updateDisplay();
+}
+
+function fightBoss() {
+    var bossHealth = 250;
+    var bossDamage = 20;
+
+    while (bossHealth > 0 && health > 0) {
+        bossHealth -= damage;
+        health -= bossDamage;
+    }
+
+    if (health <= 0) {
+        document.getElementById("message").innerHTML = "The Dark Lord defeated you.";
+        gameOver = true;
+    } else {
+        document.getElementById("message").innerHTML =
+            "You defeated the Dark Lord and escaped!";
+        gameOver = true;
+    }
+
+    updateDisplay();
+}
+
+/* ================= INIT ================= */
+
+updateDisplay();
+
+</script>
+
+</body>
+</html>
