@@ -2,140 +2,125 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Escape the Dark Lord</title>
+<title>Escape the Dark Lord - Enhanced</title>
+
 <style>
-    body {
-        background-color: black;
-        color: #00ffcc;
-        font-family: monospace;
-        text-align: center;
-        margin: 0;
-        padding: 20px;
-    }
+body {
+    background: black;
+    color: #00ffcc;
+    font-family: monospace;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+}
 
-    h1 {
-        color: red;
-    }
+h1 {
+    color: red;
+}
 
-    #gameBox {
-        border: 2px solid #00ffcc;
-        padding: 20px;
-        max-width: 600px;
-        margin: auto;
-    }
+#gameBox {
+    border: 2px solid #00ffcc;
+    padding: 20px;
+    max-width: 700px;
+    margin: auto;
+}
 
-    .stat {
-        margin: 10px 0;
-        font-size: 18px;
-    }
+.stat {
+    margin: 8px 0;
+}
 
-    button {
-        background-color: #111;
-        color: #00ffcc;
-        border: 1px solid #00ffcc;
-        padding: 10px;
-        margin: 10px;
-        cursor: pointer;
-    }
+#combatArea {
+    height: 120px;
+    margin-top: 20px;
+    border: 1px solid #00ffcc;
+    position: relative;
+    overflow: hidden;
+}
 
-    button:hover {
-        background-color: #00ffcc;
-        color: black;
-    }
+.character {
+    position: absolute;
+    top: 40px;
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
 
-    #message {
-        margin-top: 20px;
-        min-height: 40px;
-        font-size: 16px;
-    }
+#player {
+    left: 50px;
+}
+
+#enemy {
+    right: 50px;
+}
+
+.attackFlash {
+    color: red;
+    font-weight: bold;
+    animation: flash 0.3s;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+button {
+    background: black;
+    color: #00ffcc;
+    border: 1px solid #00ffcc;
+    padding: 8px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #00ffcc;
+    color: black;
+}
+
+#message {
+    margin-top: 15px;
+    min-height: 40px;
+}
 </style>
 </head>
+
 <body>
 
 <h1>Escape the Dark Lord</h1>
 
 <div id="gameBox">
-    <div class="stat">Force Power: <span id="power">10</span></div>
-    <div class="stat">Training Level: <span id="level">1</span></div>
-    <div class="stat">Survival Threshold: 150 Force</div>
 
-    <p>Press <b>T</b> to Train</p>
-    <p>Press <b>F</b> to Confront the Dark Lord</p>
+<div class="stat">Force Power: <span id="power">10</span></div>
+<div class="stat">Level: <span id="level">1</span></div>
+<div class="stat">Health: <span id="health">100</span></div>
+<div class="stat">Damage: <span id="damage">10</span></div>
 
-    <div id="message"></div>
+<p>Press <b>T</b> to Train | <b>E</b> to Fight Enemy | <b>U</b> to Upgrade | <b>B</b> to Fight Dark Lord</p>
+
+<div id="combatArea">
+    <div id="player" class="character">You</div>
+    <div id="enemy" class="character"></div>
+</div>
+
+<div id="message"></div>
+
 </div>
 
 <script>
-/*
-    Escape the Dark Lord
-    Idle + RPG Hybrid Game
-    Everything in one file
-*/
 
-// Starting stats
+// PLAYER STATS
 let forcePower = 10;
-let trainingLevel = 1;
-let survivalRequirement = 150;
+let level = 1;
+let health = 100;
+let maxHealth = 100;
+let damage = 10;
+
 let gameOver = false;
+let inCombat = false;
 
-// Update displayed stats
-function updateDisplay() {
-    document.getElementById("power").textContent = Math.floor(forcePower);
-    document.getElementById("level").textContent = trainingLevel;
-}
-
-// Idle mechanic: gain small Force power every second
-setInterval(() => {
-    if (!gameOver) {
-        forcePower += 1 * trainingLevel;
-        updateDisplay();
-    }
-}, 1000);
-
-// Keyboard controls
-document.addEventListener("keydown", function(event) {
-    if (gameOver) return;
-
-    // Train with T key
-    if (event.key.toLowerCase() === "t") {
-        train();
-    }
-
-    // Fight with F key
-    if (event.key.toLowerCase() === "f") {
-        fight();
-    }
-});
-
-// Training function
-function train() {
-    forcePower += 5;
-    trainingLevel++;
-
-    document.getElementById("message").textContent =
-        "You meditate and grow stronger...";
-
-    updateDisplay();
-}
-
-// Fight function
-function fight() {
-
-    if (forcePower >= survivalRequirement) {
-        document.getElementById("message").textContent =
-            "You are strong enough! You escape and live to fight another day!";
-        gameOver = true;
-    } else {
-        document.getElementById("message").textContent =
-            "You were too weak... The Dark Lord defeats you.";
-        gameOver = true;
-    }
-}
-
-// Initial display update
-updateDisplay();
-
-</script>
-
-</body>
-</html>
+// ENEMIES
+const enemies = [
+    { name: "Storm Trooper", health: 40, damage: 5 },
+    { name: "Dark Apprentice", health: 70, damage: 8 },
+    { name: "Sit
