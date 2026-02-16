@@ -7,12 +7,10 @@
 body { background: black; color: #00ffcc; font-family: monospace; text-align: center; padding: 20px; }
 button { background: black; color: #00ffcc; border: 1px solid #00ffcc; padding: 8px; margin: 5px; cursor: pointer; }
 button:hover { background: #00ffcc; color: black; }
-#combatArea { border: 1px solid #00ffcc; height: 150px; margin-top: 15px; position: relative; }
-.character { display: inline-block; padding: 0 20px; transition: transform 0.1s; position: absolute; top: 50px; text-align: center; }
-#player { color: #00ffcc; left: 50px; }
-#enemy { color: red; right: 50px; }
-.hpbar-container { width: 80px; height: 10px; background: grey; margin: 0 auto; border: 1px solid white; }
-.hpbar { height: 100%; background: limegreen; width: 100%; transition: width 0.2s; }
+#combatArea { border: 1px solid #00ffcc; height: 80px; margin-top: 15px; line-height: 80px; position: relative; }
+.character { display: inline-block; padding: 0 20px; transition: transform 0.1s; }
+#player { color: #00ffcc; }
+#enemy { color: red; }
 #inventory { margin-top: 20px; }
 .item { display: inline-block; border: 1px solid #00ffcc; padding: 4px 8px; margin: 3px; cursor: default; }
 .item:hover { background: #00ffcc; color: black; }
@@ -40,14 +38,8 @@ Damage: <span id="damage">10</span>
 <button onclick="fightBoss()">Fight Boss</button>
 
 <div id="combatArea">
-  <div id="player" class="character">YOU
-    <div class="hpbar-container"><div id="playerHpBar" class="hpbar"></div></div>
-    <div id="playerHpText" class="hpbar-text">100 / 100</div>
-  </div>
-  <div id="enemy" class="character">
-    <div class="hpbar-container"><div id="enemyHpBar" class="hpbar"></div></div>
-    <div id="enemyHpText" class="hpbar-text"></div>
-  </div>
+  <span id="player" class="character">YOU</span>
+  <span id="enemy" class="character"></span>
 </div>
 
 <div id="message"></div>
@@ -72,18 +64,14 @@ var inCombat = false;
 
 /* ================= ENEMIES ================= */
 var enemies = [
-  { name: "Storm Trooper", maxHealth: 50, damage: 5 },
-  { name: "Imperial Scout", maxHealth: 80, damage: 8 },
-  { name: "Dark Apprentice", maxHealth: 120, damage: 12 },
-  { name: "Bounty Hunter", maxHealth: 180, damage: 16 },
-  { name: "Sith Guard", maxHealth: 250, damage: 22 },
-  { name: "Elite Inquisitor", maxHealth: 350, damage: 30 },
-  { name: "Death Star Officer", maxHealth: 480, damage: 38 }
+  { name: "Storm Trooper", health: 40, damage: 5 },
+  { name: "Imperial Scout", health: 60, damage: 6 },
+  { name: "Dark Apprentice", health: 70, damage: 8 },
+  { name: "Bounty Hunter", health: 80, damage: 10 },
+  { name: "Sith Guard", health: 100, damage: 12 }
 ];
-var boss = { name: "Darth Vader", maxHealth: 600, damage: 50 };
-var enemyIndex = 0;
-var currentEnemy = null;
-var currentEnemyHealth = 0;
+var boss = { name: "Darth Vader", health: 250, damage: 25 };
+var enemyIndex = 0; // Track sequential enemy
 
 /* ================= ITEMS ================= */
 var items = [
@@ -94,9 +82,9 @@ var items = [
 ];
 
 /* ================= INVENTORY ================= */
-var inventory = {}; 
+var inventory = {}; // { "Force Crystal": {count:3, desc:"..."} }
 
-/* ================= DISPLAY ================= */
+/* ================= UPDATE DISPLAY ================= */
 function updateDisplay(){
   document.getElementById("power").innerHTML = Math.floor(forcePower);
   document.getElementById("fps").innerHTML = forcePerSecond;
@@ -119,21 +107,29 @@ function updateDisplay(){
   }
 }
 
-/* ================= IDLE ================= */
+/* ================= IDLE SYSTEM ================= */
 setInterval(function(){
   if(!gameOver){
     forcePower += forcePerSecond;
-    health += 1; 
+
+    // Health regen
+    health += 1;
     if(health>maxHealth) health=maxHealth;
+
     updateDisplay();
-    updateHpBars();
   }
 },1000);
 
 /* ================= UPGRADES ================= */
-function buyGenerator(){ if(forcePower>=generatorCost){ forcePower-=generatorCost; forcePerSecond+=1; generatorCost=Math.floor(generatorCost*1.5); document.getElementById("message").innerHTML="Force production increased!"; updateDisplay(); } }
-function buyDamage(){ if(forcePower>=damageCost){ forcePower-=damageCost; damage+=5; damageCost=Math.floor(damageCost*1.5); document.getElementById("message").innerHTML="Damage increased!"; updateDisplay(); } }
-function buyHealth(){ if(forcePower>=healthCost){ forcePower-=healthCost; maxHealth+=25; health=maxHealth; healthCost=Math.floor(healthCost*1.5); document.getElementById("message").innerHTML="Max health increased!"; updateDisplay(); } }
+function buyGenerator(){
+  if(forcePower>=generatorCost){ forcePower-=generatorCost; forcePerSecond+=1; generatorCost=Math.floor(generatorCost*1.5); document.getElementById("message").innerHTML="Force production increased!"; updateDisplay(); }
+}
+function buyDamage(){
+  if(forcePower>=damageCost){ forcePower-=damageCost; damage+=5; damageCost=Math.floor(damageCost*1.5); document.getElementById("message").innerHTML="Damage increased!"; updateDisplay(); }
+}
+function buyHealth(){
+  if(forcePower>=healthCost){ forcePower-=healthCost; maxHealth+=25; health=maxHealth; healthCost=Math.floor(healthCost*1.5); document.getElementById("message").innerHTML="Max health increased!"; updateDisplay(); }
+}
 
 /* ================= COMBAT ANIMATION ================= */
 function flash(element){
@@ -142,31 +138,22 @@ function flash(element){
   setTimeout(function(){el.style.transform="scale(1)";},100);
 }
 
-/* ================= UPDATE HP BARS ================= */
-function updateHpBars(enemyHealth, enemyMax){
-  document.getElementById("playerHpBar").style.width = (health/maxHealth*100)+"%";
-  document.getElementById("playerHpText").innerHTML = Math.floor(health)+"/"+maxHealth;
-  if(enemyHealth!==undefined){
-    document.getElementById("enemyHpBar").style.width = (enemyHealth/enemyMax*100)+"%";
-    document.getElementById("enemyHpText").innerHTML = Math.floor(enemyHealth)+"/"+enemyMax;
-  }
-}
-
 /* ================= FIGHT NEXT ENEMY ================= */
 function nextCombat(){
   if(gameOver || inCombat) return;
   if(enemyIndex>=enemies.length){ document.getElementById("message").innerHTML="All regular enemies defeated!"; return; }
 
   inCombat=true;
-  currentEnemy = Object.assign({}, enemies[enemyIndex]);
-  currentEnemyHealth = currentEnemy.maxHealth;
-  document.getElementById("enemy").innerHTML=currentEnemy.name;
-  updateHpBars(currentEnemyHealth, currentEnemy.maxHealth);
+  var enemy = Object.assign({}, enemies[enemyIndex]);
+  var enemyName=enemy.name;
+  var enemyHealth=enemy.health;
+  var enemyDamage=enemy.damage;
+  document.getElementById("enemy").innerHTML=enemyName;
 
   function combatStep(){
-    if(health<=0){ document.getElementById("message").innerHTML="You were defeated by "+currentEnemy.name+"."; gameOver=true; inCombat=false; return; }
-    if(currentEnemyHealth<=0){
-      document.getElementById("message").innerHTML=currentEnemy.name+" defeated!";
+    if(health<=0){ document.getElementById("message").innerHTML="You were defeated by "+enemyName+"."; gameOver=true; inCombat=false; return; }
+    if(enemyHealth<=0){
+      document.getElementById("message").innerHTML=enemyName+" defeated!";
       forcePower+=40;
 
       // Loot drop
@@ -180,16 +167,16 @@ function nextCombat(){
       enemyIndex++;
       inCombat=false;
       document.getElementById("enemy").innerHTML="";
-      updateHpBars();
       updateDisplay();
       return;
     }
 
+    // Attack animation
     flash("player");
     flash("enemy");
-    currentEnemyHealth -= damage;
-    health -= currentEnemy.damage;
-    updateHpBars(currentEnemyHealth, currentEnemy.maxHealth);
+    enemyHealth-=damage;
+    health-=enemyDamage;
+    updateDisplay();
 
     setTimeout(combatStep, 500);
   }
@@ -197,34 +184,26 @@ function nextCombat(){
   combatStep();
 }
 
-/* ================= FIGHT BOSS WITH SPECIAL ATTACKS ================= */
+/* ================= FIGHT BOSS ================= */
 function fightBoss(){
   if(gameOver || inCombat) return;
   inCombat=true;
 
-  var bossCurrentHealth = boss.maxHealth;
-  var turn = 0;
-  document.getElementById("enemy").innerHTML=boss.name;
-  updateHpBars(bossCurrentHealth, boss.maxHealth);
+  var bossName=boss.name;
+  var bossHealth=boss.health;
+  var bossDamage=boss.damage;
+  document.getElementById("enemy").innerHTML=bossName;
 
   function combatStep(){
-    if(health<=0){ document.getElementById("message").innerHTML=boss.name+" defeated you."; gameOver=true; inCombat=false; return; }
-    if(bossCurrentHealth<=0){ document.getElementById("message").innerHTML="You defeated "+boss.name+" and escaped!"; gameOver=true; inCombat=false; document.getElementById("enemy").innerHTML=""; updateHpBars(); return; }
-
-    turn++;
-    var bossAttack = boss.damage;
-    if(turn%3===0){
-      bossAttack = boss.damage*2;
-      document.getElementById("message").innerHTML=boss.name+" uses Force Slam!";
-    } else { document.getElementById("message").innerHTML=""; }
+    if(health<=0){ document.getElementById("message").innerHTML=bossName+" defeated you."; gameOver=true; inCombat=false; return; }
+    if(bossHealth<=0){ document.getElementById("message").innerHTML="You defeated "+bossName+" and escaped!"; gameOver=true; inCombat=false; document.getElementById("enemy").innerHTML=""; updateDisplay(); return; }
 
     flash("player");
     flash("enemy");
-    bossCurrentHealth -= damage;
-    health -= bossAttack;
-    updateHpBars(bossCurrentHealth, boss.maxHealth);
-
-    setTimeout(combatStep, 600);
+    bossHealth-=damage;
+    health-=bossDamage;
+    updateDisplay();
+    setTimeout(combatStep, 500);
   }
 
   combatStep();
@@ -239,7 +218,6 @@ document.addEventListener("keydown",function(e){
 
 /* ================= INIT ================= */
 updateDisplay();
-updateHpBars();
 document.body.focus();
 </script>
 
