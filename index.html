@@ -72,16 +72,18 @@ var inCombat = false;
 
 /* ================= ENEMIES ================= */
 var enemies = [
-  { name: "Storm Trooper", health: 50, damage: 5 },
-  { name: "Imperial Scout", health: 80, damage: 8 },
-  { name: "Dark Apprentice", health: 120, damage: 12 },
-  { name: "Bounty Hunter", health: 180, damage: 16 },
-  { name: "Sith Guard", health: 250, damage: 22 },
-  { name: "Elite Inquisitor", health: 350, damage: 30 },
-  { name: "Death Star Officer", health: 480, damage: 38 }
+  { name: "Storm Trooper", maxHealth: 50, damage: 5 },
+  { name: "Imperial Scout", maxHealth: 80, damage: 8 },
+  { name: "Dark Apprentice", maxHealth: 120, damage: 12 },
+  { name: "Bounty Hunter", maxHealth: 180, damage: 16 },
+  { name: "Sith Guard", maxHealth: 250, damage: 22 },
+  { name: "Elite Inquisitor", maxHealth: 350, damage: 30 },
+  { name: "Death Star Officer", maxHealth: 480, damage: 38 }
 ];
-var boss = { name: "Darth Vader", health: 600, damage: 50 };
+var boss = { name: "Darth Vader", maxHealth: 600, damage: 50 };
 var enemyIndex = 0;
+var currentEnemy = null;
+var currentEnemyHealth = 0;
 
 /* ================= ITEMS ================= */
 var items = [
@@ -105,6 +107,7 @@ function updateDisplay(){
   document.getElementById("dmgCost").innerHTML = damageCost;
   document.getElementById("hpCost").innerHTML = healthCost;
 
+  // Inventory display
   var invDiv = document.getElementById("inventory");
   invDiv.innerHTML = "";
   for(var key in inventory){
@@ -155,18 +158,18 @@ function nextCombat(){
   if(enemyIndex>=enemies.length){ document.getElementById("message").innerHTML="All regular enemies defeated!"; return; }
 
   inCombat=true;
-  var enemy = Object.assign({}, enemies[enemyIndex]);
-  var enemyHealth=enemy.health;
-  var enemyMax=enemy.health;
-  document.getElementById("enemy").innerHTML=enemy.name;
-  updateHpBars(enemyHealth, enemyMax);
+  currentEnemy = Object.assign({}, enemies[enemyIndex]);
+  currentEnemyHealth = currentEnemy.maxHealth;
+  document.getElementById("enemy").innerHTML=currentEnemy.name;
+  updateHpBars(currentEnemyHealth, currentEnemy.maxHealth);
 
   function combatStep(){
-    if(health<=0){ document.getElementById("message").innerHTML="You were defeated by "+enemy.name+"."; gameOver=true; inCombat=false; return; }
-    if(enemyHealth<=0){
-      document.getElementById("message").innerHTML=enemy.name+" defeated!";
+    if(health<=0){ document.getElementById("message").innerHTML="You were defeated by "+currentEnemy.name+"."; gameOver=true; inCombat=false; return; }
+    if(currentEnemyHealth<=0){
+      document.getElementById("message").innerHTML=currentEnemy.name+" defeated!";
       forcePower+=40;
 
+      // Loot drop
       if(Math.random()<0.5){
         var lootItem = items[Math.floor(Math.random()*items.length)];
         if(inventory[lootItem.name]){ inventory[lootItem.name].count+=1; }
@@ -184,33 +187,31 @@ function nextCombat(){
 
     flash("player");
     flash("enemy");
-    enemyHealth-=damage;
-    health-=enemy.damage;
-    updateHpBars(enemyHealth, enemyMax);
-    setTimeout(combatStep,500);
+    currentEnemyHealth -= damage;
+    health -= currentEnemy.damage;
+    updateHpBars(currentEnemyHealth, currentEnemy.maxHealth);
+
+    setTimeout(combatStep, 500);
   }
 
   combatStep();
 }
 
-/* ================= FIGHT BOSS ================= */
+/* ================= FIGHT BOSS WITH SPECIAL ATTACKS ================= */
 function fightBoss(){
   if(gameOver || inCombat) return;
   inCombat=true;
 
-  var bossHealth = boss.health;
-  var bossMax = boss.health;
-  var turn=0;
-
+  var bossCurrentHealth = boss.maxHealth;
+  var turn = 0;
   document.getElementById("enemy").innerHTML=boss.name;
-  updateHpBars(bossHealth,bossMax);
+  updateHpBars(bossCurrentHealth, boss.maxHealth);
 
   function combatStep(){
     if(health<=0){ document.getElementById("message").innerHTML=boss.name+" defeated you."; gameOver=true; inCombat=false; return; }
-    if(bossHealth<=0){ document.getElementById("message").innerHTML="You defeated "+boss.name+" and escaped!"; gameOver=true; inCombat=false; document.getElementById("enemy").innerHTML=""; updateHpBars(); return; }
+    if(bossCurrentHealth<=0){ document.getElementById("message").innerHTML="You defeated "+boss.name+" and escaped!"; gameOver=true; inCombat=false; document.getElementById("enemy").innerHTML=""; updateHpBars(); return; }
 
     turn++;
-
     var bossAttack = boss.damage;
     if(turn%3===0){
       bossAttack = boss.damage*2;
@@ -219,11 +220,11 @@ function fightBoss(){
 
     flash("player");
     flash("enemy");
-    bossHealth -= damage;
+    bossCurrentHealth -= damage;
     health -= bossAttack;
-    updateHpBars(bossHealth,bossMax);
+    updateHpBars(bossCurrentHealth, boss.maxHealth);
 
-    setTimeout(combatStep,600);
+    setTimeout(combatStep, 600);
   }
 
   combatStep();
